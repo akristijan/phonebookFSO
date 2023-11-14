@@ -1,8 +1,14 @@
+import 'dotenv/config'
 import express from 'express'
 const app = express();
+import connectDB from "./config/database.js"
 import morgan from 'morgan';
 import cors from 'cors'
+import Person from './models/Person.js'
+import mongoose from 'mongoose';
 
+//connect to database
+connectDB()
 
 morgan.token('content', function getBody (req) {
     return JSON.stringify({name: req.body.name, number:req.body.number})
@@ -14,7 +20,7 @@ app.use(express.json());
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content'));
 
 
-let phonebook = [
+/* let phonebook = [
     { 
       "id": 1,
       "name": "Arto Hellas", 
@@ -36,28 +42,37 @@ let phonebook = [
       "number": "39-23-6423122"
     }
 ]
-
+ */
 //Routes
 app.get('/', (req, res) => {
     return res.send("<h1>Welcome to Phonebook</h1>")
 })
 // route to get whole phonebook
-app.get('/api/persons', (req, res) => {
-    return res.json(phonebook)
+app.get('/api/persons', async (req, res) => {
+    try {
+        const contacts = await Person.find().lean()
+        console.log(contacts)
+        mongoose.connection.close()
+        res.json(contacts)
+        
+    } catch (error) {
+        console.log(error)
+    }
+    
 })
 // route to get a single phonebook entry
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const person = phonebook.find( person => person.id === id)
-    if(person) {
-        return res.json(person)
-    } else {
-        return res.status(204).send("Person not found in phonebook")
+app.get('/api/persons/:id', async (req, res) => {
+    try {
+        const person = await Person.findById(req.params.id)
+        res.json(person)
+    } catch (error) {
+        console.log("Person not found in phonebook", error)
     }
 })
 
-app.get('/info', (req, res) => {
-    res.send(`<p>Phonebook has info for ${phonebook.length} people</p><p>
+app.get('/info',async (req, res) => {
+    const numberOfContacts = await Person.countDocuments()
+    res.send(`<p>Phonebook has info for ${numberOfContacts} people</p><p>
         ${ new Date()}
     </p>`)
 })
@@ -65,6 +80,7 @@ app.get('/info', (req, res) => {
 function generateId() {
     return Math.floor(Math.random() * 100000)
 }
+
 //route for adding new persons in the phonebook
 app.post('/api/persons', (req,res) => {
     const body = req.body
@@ -75,18 +91,24 @@ app.post('/api/persons', (req,res) => {
         })
     }
 
-    const newPerson = {
-        id: generateId(),
-        name: body.name,
-        phone: body.phone || false
-    }
+    const newPerson = new Person(
+        {
+            name: body.name,
+            number: body.number || false
+        }
+    )
 
-    if(phonebook.find(p=> p.name === newPerson.name)) {
+    newPerson.save().then(result => {
+        console.log("Contact saved!")
+        mongoose.connection.close()
+    })
+
+   /*  if(phonebook.find(p=> p.name === newPerson.name)) {
         return res.status(409).json({error: "name must be unique"})
     }else {
         phonebook = phonebook.concat(newPerson)
-    }
-   
+    } */
+    
     res.json(newPerson)
 })
 
