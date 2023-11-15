@@ -80,20 +80,20 @@ app.post('/api/persons', (req,res) => {
         
     })
 
-   /*  if(phonebook.find(p=> p.name === newPerson.name)) {
-        return res.status(409).json({error: "name must be unique"})
-    }else {
-        phonebook = phonebook.concat(newPerson)
-    } */
+
     
     res.json(newPerson)
 })
 
-/* app.delete('/api/persons/:id',async (req,res) => {
+app.delete('/api/persons/:id',async (req,res) => {
+    try {
+        await Person.deleteOne({_id: req.params.id})
+        res.status(204).end()
+    } catch (error) {
+        console.log(error)
+    }
     
-    await Person.deleteOne({_id: ObjectId(req.params.id)})
-    res.status(204).end()
-}) */
+})
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
