@@ -20,12 +20,15 @@ app.use(express.json());
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content'));
 
 
+
+
+
 //Routes
 app.get('/', (req, res) => {
     return res.send("<h1>Welcome to Phonebook</h1>")
 })
 // route to get whole phonebook
-app.get('/api/persons', async (req, res) => {
+app.get('/api/persons', async (req, res, next) => {
     try {
         const contacts = await Person.find().lean()
         console.log(contacts)
@@ -33,17 +36,18 @@ app.get('/api/persons', async (req, res) => {
         
         
     } catch (error) {
-        console.log(error)
+        next(error)
     }
     
 })
 // route to get a single phonebook entry
-app.get('/api/persons/:id', async (req, res) => {
+app.get('/api/persons/:id', async (req, res, next) => {
     try {
         const person = await Person.findById(req.params.id)
         res.json(person)
     } catch (error) {
         console.log("Person not found in phonebook", error)
+        next(error)
     }
 })
 
@@ -85,15 +89,37 @@ app.post('/api/persons', (req,res) => {
     res.json(newPerson)
 })
 
-app.delete('/api/persons/:id',async (req,res) => {
+app.delete('/api/persons/:id',async (req,res,next) => {
+
     try {
         await Person.deleteOne({_id: req.params.id})
         res.status(204).end()
     } catch (error) {
         console.log(error)
+        next(error)
     }
     
 })
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  
+  // handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } 
+  
+    next(error)
+  }
+  
+  // this has to be the last loaded middleware.
+  app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
