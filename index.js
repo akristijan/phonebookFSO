@@ -87,6 +87,16 @@ app.post('/api/persons', (req,res) => {
     res.json(newPerson)
 })
 
+app.put('/api/persons/:id', async (req, res, next) => {
+    try {
+        await Person.findByIdAndUpdate(req.params.id, { number: req.body.number})
+        
+    } catch (error) {
+        next(error)
+        console.log(error)
+    }
+})
+
 app.delete('/api/persons/:id',async (req,res,next) => {
 
     try {
