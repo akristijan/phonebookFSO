@@ -78,14 +78,12 @@ app.post('/api/persons', (req,res) => {
             number: body.number || false
         }
     )
-
+    
     newPerson.save().then(result => {
         console.log("Contact saved!")
         
     })
 
-
-    
     res.json(newPerson)
 })
 
