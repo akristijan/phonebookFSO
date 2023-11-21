@@ -65,12 +65,14 @@ function generateId() {
 //route for adding new persons in the phonebook
 app.post('/api/persons', (req,res) => {
     const body = req.body
+    const personName = req.body.name
 
     if(!body.name && !body.phone) {
         return res.status(400).json({
             error: "name or phone missing"
         })
     }
+
 
     const newPerson = new Person(
         {
