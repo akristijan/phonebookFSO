@@ -91,7 +91,7 @@ app.post('/api/persons', (req,res) => {
 
 app.put('/api/persons/:id', async (req, res, next) => {
     try {
-        await Person.findByIdAndUpdate(req.params.id, { number: req.body.number})
+        await Person.findByIdAndUpdate(req.params.id, { number: req.body.number}, {runValidators: true, context: query})
         
     } catch (error) {
         next(error)
